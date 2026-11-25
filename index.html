@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#090B10">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PULSE">
+<meta name="application-name" content="PULSE // PS5">
+<meta name="format-detection" content="telephone=no">
+<title>PULSE // PS5</title>
+<link rel="apple-touch-icon" id="ati" href="">
+<link rel="icon" type="image/png" id="fav" href="">
+<link rel="manifest" id="mf" href="">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#090B10;--bg2:#0D1017;--glass:rgba(255,255,255,.035);--glass2:rgba(255,255,255,.06);
+  --line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.14);
+  --tx:#E8ECF2;--mu:#8A93A3;--mu2:#5B6270;--blue:#0070D1;--blue2:#2E8BE6;
+  --lobby:#2E8BE6;--match:#4CC38A;--afk:#D6A94A;--off:#5B6270;
+  --bronze:#B88459;--silver:#A9B4C2;--gold:#C9A24B;--plat:#7FB8E8;
+  --sat:env(safe-area-inset-top);--sab:env(safe-area-inset-bottom);
+  --font:"SF Pro Display","SF Pro Text",Inter,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font-family:var(--font);-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+body{background:radial-gradient(900px 420px at 50% -120px,rgba(0,112,209,.16),transparent 70%),var(--bg);background-attachment:fixed}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+.hidden{display:none!important}
+.wrap{max-width:520px;margin:0 auto;padding:0 16px}
+
+/* wordmark */
+.mark{display:flex;align-items:baseline;gap:8px;letter-spacing:.22em;font-weight:600;font-size:15px}
+.mark small{font-size:11px;font-weight:500;color:var(--mu);letter-spacing:.18em}
+
+/* glass */
+.card{background:var(--glass);border:1px solid var(--line);border-radius:16px;backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%)}
+.pad{padding:16px}
+.lbl{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mu);font-weight:600}
+.row{display:flex;align-items:center;gap:12px}
+.sp{flex:1}
+.mut{color:var(--mu)}
+.num{font-variant-numeric:tabular-nums}
+
+/* inputs */
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.in,.sel{width:100%;height:46px;padding:0 14px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;outline:none;transition:border-color .15s,background .15s;font-size:15px;appearance:none;-webkit-appearance:none}
+.in:focus,.sel:focus{border-color:var(--blue);background:rgba(0,112,209,.06)}
+.in::placeholder{color:var(--mu2)}
+.sel{background-image:linear-gradient(45deg,transparent 50%,var(--mu) 50%),linear-gradient(135deg,var(--mu) 50%,transparent 50%);background-position:calc(100% - 20px) 20px,calc(100% - 15px) 20px;background-size:5px 5px;background-repeat:no-repeat;padding-right:34px}
+.sel option{background:#10141C}
+.code{letter-spacing:.5em;text-transform:uppercase;text-align:center;font-weight:600;font-size:18px;padding-left:.5em}
+
+/* buttons */
+.btn{height:46px;padding:0 18px;border-radius:12px;border:1px solid var(--line2);background:var(--glass2);font-weight:600;font-size:14px;letter-spacing:.02em;transition:transform .1s,background .15s,border-color .15s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.pri:active{background:#005fb3}
+.btn.ghost{background:transparent}
+.btn.sm{height:34px;padding:0 12px;font-size:12.5px;border-radius:10px}
+.btn.blk{width:100%}
+.err{color:#E5736F;font-size:13px;min-height:18px;margin:4px 0 8px}
+
+/* gate */
+#gate{min-height:100%;display:flex;flex-direction:column;justify-content:center;padding:calc(var(--sat) + 28px) 0 calc(var(--sab) + 28px)}
+.hero{text-align:center;margin-bottom:28px}
+.hero .logo{width:64px;height:64px;border-radius:16px;border:1px solid var(--line2);margin:0 auto 18px;display:block}
+.hero h1{margin:0;font-size:26px;letter-spacing:.24em;font-weight:600}
+.hero p{margin:8px 0 0;color:var(--mu);font-size:13.5px;letter-spacing:.02em}
+.or{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--mu2);font-size:11px;letter-spacing:.2em}
+.or:before,.or:after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* app shell */
+#app{min-height:100%;display:flex;flex-direction:column}
+header.top{position:sticky;top:0;z-index:20;padding:calc(var(--sat) + 10px) 0 10px;background:linear-gradient(var(--bg) 70%,rgba(9,11,16,0));}
+.chip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border:1px solid var(--line);border-radius:999px;background:var(--glass);font-size:12.5px;font-weight:600;letter-spacing:.2em}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--off);flex:none}
+.dot.live{background:var(--match);box-shadow:0 0 0 3px rgba(76,195,138,.14)}
+.iconbtn{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--glass);display:grid;place-items:center;color:var(--mu)}
+.iconbtn:active{background:var(--glass2)}
+.iconbtn svg{width:17px;height:17px}
+main{flex:1;padding-bottom:calc(86px + var(--sab))}
+.view>*+*{margin-top:12px}
+h2.sec{margin:20px 2px 10px;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mu);font-weight:600;display:flex;align-items:center}
+h2.sec .sp{flex:1}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:8px 16px calc(var(--sab) + 8px);background:rgba(9,11,16,.78);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-top:1px solid var(--line)}
+nav.tabs .in-nav{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+nav.tabs button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;border-radius:12px;color:var(--mu2);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;transition:color .15s}
+nav.tabs button svg{width:21px;height:21px}
+nav.tabs button.on{color:var(--tx)}
+nav.tabs button.on svg{color:var(--blue2)}
+
+/* segmented status */
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.seg button{height:40px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.02);font-size:12px;font-weight:600;color:var(--mu);display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
+.seg button.on{color:var(--tx);border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
+.seg button i{width:6px;height:6px;border-radius:50%;background:var(--c)}
+
+/* members */
+.mem{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.mem+.mem{border-top:1px solid var(--line)}
+.av{width:40px;height:40px;border-radius:12px;border:1px solid var(--line2);display:grid;place-items:center;font-weight:600;font-size:15px;position:relative;background:rgba(255,255,255,.03);flex:none}
+.av b{position:absolute;right:-3px;bottom:-3px;width:11px;height:11px;border-radius:50%;border:2px solid var(--bg2);background:var(--c)}
+.mem .nm{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px}
+.mem .sub{font-size:12.5px;color:var(--mu);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
+.psn{height:32px;padding:0 10px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.03);font-size:12px;font-weight:600;color:var(--tx);display:inline-flex;align-items:center;gap:6px;max-width:150px}
+.psn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.psn svg{width:13px;height:13px;color:var(--mu);flex:none}
+.psn:active{border-color:var(--blue)}
+.psn.empty{color:var(--mu2);pointer-events:none}
+.stlbl{font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--c)}
+
+/* tier badge */
+.tier{display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:5px;border:1px solid var(--c);color:var(--c);font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+
+/* standings */
+.st{display:grid;grid-template-columns:22px 1fr auto auto;gap:12px;align-items:center;padding:12px 14px}
+.st+.st{border-top:1px solid var(--line)}
+.st .rk{color:var(--mu2);font-weight:600;font-size:13px}
+.bar{height:2px;border-radius:2px;background:var(--line);margin-top:7px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--c)}
+.rt{font-weight:600;font-size:16px;text-align:right}
+.rec{font-size:11.5px;color:var(--mu);text-align:right;margin-top:2px}
+.strk{font-size:11px;font-weight:700;letter-spacing:.06em}
+.strk.w{color:var(--match)}.strk.l{color:var(--mu2)}
+
+/* h2h */
+.h2h{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;text-align:center}
+.h2h .big{font-size:44px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.h2h .vs{font-size:10.5px;letter-spacing:.2em;color:var(--mu2);font-weight:600}
+.split{height:4px;border-radius:4px;background:var(--line);overflow:hidden;display:flex;margin-top:14px}
+.split i{display:block;height:100%}
+.form{display:flex;gap:5px;justify-content:center;margin-top:8px}
+.form i{width:18px;height:4px;border-radius:2px;background:var(--line2)}
+.form i.a{background:var(--blue2)}.form i.b{background:var(--mu)}
+
+/* match list */
+.mt{display:flex;align-items:center;gap:10px;padding:11px 14px;font-size:14px}
+.mt+.mt{border-top:1px solid var(--line)}
+.mt .w{font-weight:600}
+.mt .l{color:var(--mu)}
+.mt .meta{font-size:11.5px;color:var(--mu2);margin-top:2px}
+.mt .d{font-size:12px;color:var(--match);font-weight:600}
+.x{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--mu2)}
+.x:active{background:var(--glass2);color:var(--tx)}
+.x svg{width:14px;height:14px}
+.empty{padding:26px 16px;text-align:center;color:var(--mu);font-size:13.5px;line-height:1.5}
+
+/* bounty flipper */
+.deck{perspective:1200px;display:flex;justify-content:center;margin:4px 0 16px}
+.flip{position:relative;width:100%;max-width:340px;aspect-ratio:3/4.1;transition:transform .55s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d;cursor:pointer}
+.flip.on{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;border-radius:20px;border:1px solid var(--line2);backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;display:flex;flex-direction:column;padding:22px}
+.front{background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.015)),#0D1119;align-items:center;justify-content:center;text-align:center;gap:14px}
+.front svg{width:72px;height:72px;color:var(--blue2);opacity:.9}
+.front .t{letter-spacing:.3em;font-weight:600;font-size:13px}
+.front .h{color:var(--mu);font-size:12px;letter-spacing:.1em}
+.back{transform:rotateY(180deg);background:linear-gradient(160deg,rgba(0,112,209,.14),rgba(255,255,255,.02) 60%),#0D1119;justify-content:space-between}
+.back .cat{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--blue2);font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.back .cat em{font-style:normal;color:var(--mu2);letter-spacing:.14em}
+.back h3{margin:0;font-size:26px;line-height:1.15;font-weight:600;letter-spacing:-.01em}
+.back p{margin:12px 0 0;color:#B7BFCC;font-size:15.5px;line-height:1.5}
+.back .ft{font-size:10.5px;letter-spacing:.2em;color:var(--mu2)}
+.cc{display:flex;align-items:center;gap:10px;padding:11px 14px}
+.cc+.cc{border-top:1px solid var(--line)}
+.cc .tt{font-weight:600;font-size:14px}.cc .rr{font-size:12.5px;color:var(--mu);margin-top:2px}
+
+/* sheet / modal */
+.ov{position:fixed;inset:0;z-index:50;background:rgba(3,5,8,.66);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .2s}
+.ov.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:60;max-width:520px;margin:0 auto;background:#0E1219;border:1px solid var(--line2);border-bottom:0;border-radius:22px 22px 0 0;padding:10px 18px calc(var(--sab) + 20px);transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.8,.2,1);max-height:88vh;overflow:auto}
+.sheet.on{transform:none}
+.grab{width:36px;height:4px;border-radius:4px;background:var(--line2);margin:0 auto 14px}
+.sheet h3{margin:0 0 14px;font-size:17px;font-weight:600;letter-spacing:.02em}
+.modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:20px;pointer-events:none;opacity:0;transition:opacity .2s}
+.modal.on{opacity:1;pointer-events:auto}
+.modal .in-m{width:100%;max-width:400px;max-height:92vh;overflow:auto}
+
+/* recap */
+.recap{background:linear-gradient(170deg,#0F141D,#090B10);border:1px solid var(--line2);border-radius:20px;padding:22px;position:relative;overflow:hidden}
+.recap:before{content:"";position:absolute;inset:-40% -20% auto auto;width:260px;height:260px;background:radial-gradient(closest-side,rgba(0,112,209,.22),transparent);pointer-events:none}
+.recap .hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:22px}
+.recap .mvp{font-size:34px;font-weight:600;letter-spacing:-.01em;margin:6px 0 4px}
+.recap .sub{color:var(--mu);font-size:13px}
+.recap .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+.recap .tile{border:1px solid var(--line);border-radius:14px;padding:13px;background:rgba(255,255,255,.025)}
+.recap .tile .v{font-size:19px;font-weight:600;margin-top:6px;line-height:1.2}
+.recap .tile .s{font-size:12px;color:var(--mu);margin-top:3px}
+.recap .tile.wide{grid-column:1/-1}
+.recap .rows{margin-top:18px;border-top:1px solid var(--line)}
+.recap .rw{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.recap .ft{margin-top:16px;font-size:10px;letter-spacing:.22em;color:var(--mu2);text-align:center}
+
+#toast{position:fixed;left:50%;bottom:calc(96px + var(--sab));transform:translate(-50%,16px);z-index:80;padding:10px 16px;border-radius:12px;background:#151A23;border:1px solid var(--line2);font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:all .25s;white-space:nowrap}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+
+<!-- GATE -->
+<section id="gate" class="hidden">
+  <div class="wrap">
+    <div class="hero">
+      <img class="logo" id="logo" alt="">
+      <h1>PULSE</h1>
+      <p>Squad companion for PlayStation 5</p>
+    </div>
+    <div class="card pad">
+      <div class="field"><label class="lbl">Display name</label><input class="in" id="gName" maxlength="14" placeholder="Your name" autocomplete="off"></div>
+      <div class="field"><label class="lbl">PSN ID</label><input class="in" id="gPsn" maxlength="16" placeholder="Optional" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+      <div class="err" id="gErr"></div>
+      <button class="btn pri blk" id="bCreate">Create room</button>
+      <div class="or">OR JOIN</div>
+      <div class="field"><label class="lbl">Room code</label><input class="in code" id="gCode" maxlength="4" placeholder="K9X2" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
+      <button class="btn blk" id="bJoin">Join room</button>
+    </div>
+  </div>
+</section>
+
+<!-- APP -->
+<section id="app" class="hidden">
+  <header class="top"><div class="wrap row">
+    <div class="mark">PULSE<small>// PS5</small></div>
+    <div class="sp"></div>
+    <button class="chip" data-act="copycode" aria-label="Copy room code"><span class="dot" id="live"></span><span id="roomCode"></span></button>
+    <button class="iconbtn" data-act="recap" aria-label="Session summary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button>
+    <button class="iconbtn" data-act="leave" aria-label="Leave room"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
+  </div></header>
+  <main><div class="wrap view" id="view"></div></main>
+  <nav class="tabs"><div class="in-nav">
+    <button data-tab="squad"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.2a3.2 3.2 0 0 1 0 5.6M18 14.4c1.8.9 3 2.8 3 5.6"/></svg>Squad</button>
+    <button data-tab="compete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/></svg>Compete</button>
+    <button data-tab="bounty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>Bounties</button>
+  </div></nav>
+</section>
+
+<div class="ov" id="ov" data-act="close"></div>
+<div class="sheet" id="sheet"></div>
+<div class="modal" id="modal"><div class="in-m" id="modalBody"></div></div>
+<div id="toast"></div>
+
+<script>
+/* ============ CONFIG ============ */
+// NOTE: the project ref inside your anon key is "poxazuajerafevrjnzxj", so the project URL is derived from it.
+// If your Supabase dashboard (Project Settings > API) shows a different URL, replace it here.
+const SUPABASE_URL = 'https://poxazuajerafevrjnzxj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBveGF6dWFqZXJhZmV2cmpuenhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU1OTcxNjQsImV4cCI6MjExMTE3MzE2NH0.bxOxsDAuRZEyq8t21kM3ULz0SzQ3tnd7inVN9kx2H0Y';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {realtime:{params:{eventsPerSecond:10}}});
+
+/* ============ PWA: icon + manifest ============ */
+function makeIcon(size){
+  const c=document.createElement('canvas');c.width=c.height=size;const x=c.getContext('2d');
+  x.fillStyle='#090B10';x.fillRect(0,0,size,size);
+  const g=x.createRadialGradient(size/2,size*.34,0,size/2,size/2,size*.75);
+  g.addColorStop(0,'rgba(0,112,209,.38)');g.addColorStop(1,'rgba(0,112,209,0)');
+  x.fillStyle=g;x.fillRect(0,0,size,size);
+  x.strokeStyle='rgba(255,255,255,.14)';x.lineWidth=size*.008;
+  x.beginPath();x.arc(size/2,size/2,size*.34,0,Math.PI*2);x.stroke();
+  x.strokeStyle='#0070D1';x.lineWidth=size*.04;x.lineCap='round';x.lineJoin='round';x.beginPath();
+  [[.2,.52],[.35,.52],[.43,.35],[.55,.69],[.63,.46],[.68,.52],[.8,.52]].forEach((p,i)=>i?x.lineTo(p[0]*size,p[1]*size):x.moveTo(p[0]*size,p[1]*size));
+  x.stroke();
+  return c.toDataURL('image/png');
+}
+(function pwa(){
+  try{
+    const i180=makeIcon(180),i192=makeIcon(192),i512=makeIcon(512);
+    document.getElementById('ati').href=i180;
+    document.getElementById('fav').href=i192;
+    document.getElementById('logo').src=i192;
+    const start=location.href.split('#')[0].split('?')[0];
+    const man={name:'PULSE // PS5',short_name:'PULSE',description:'Squad companion for PlayStation 5',start_url:start,scope:start.replace(/[^\/]*$/,''),display:'standalone',orientation:'portrait',background_color:'#090B10',theme_color:'#090B10',
+      icons:[{src:i192,sizes:'192x192',type:'image/png',purpose:'any maskable'},{src:i512,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
+    document.getElementById('mf').href=URL.createObjectURL(new Blob([JSON.stringify(man)],{type:'application/manifest+json'}));
+  }catch(e){}
+  if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  }
+})();
+
+/* ============ UTIL ============ */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+const uuid=()=>crypto.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c=='x'?r:(r&3|8)).toString(16)});
+const CODE_CHARS='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const genCode=()=>Array.from({length:4},()=>CODE_CHARS[Math.random()*CODE_CHARS.length|0]).join('');
+let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),1800)}
+async function copy(text,msg){
+  try{await navigator.clipboard.writeText(text)}catch(e){
+    const a=document.createElement('textarea');a.value=text;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(_){}a.remove();
+  }
+  toast(msg||'Copied');
+}
+const ICON={copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg>',
+ x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+ plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+ pulse:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h5l2-6 4 12 2-6h7"/></svg>'};
+const timeFmt=d=>new Date(d).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+const dayFmt=d=>new Date(d).toLocaleDateString([],{weekday:'short',day:'numeric',month:'short'});
+function ago(d){const s=(Date.now()-new Date(d))/1000;if(s<60)return'now';if(s<3600)return Math.floor(s/60)+'m';if(s<86400)return Math.floor(s/3600)+'h';return Math.floor(s/86400)+'d'}
+
+/* ============ STATE ============ */
+const STATUS=[['In Lobby','--lobby'],['In Match','--match'],['AFK','--afk'],['Offline','--off']];
+const stColor=s=>(STATUS.find(x=>x[0]===s)||STATUS[3])[1];
+const S={room:LS.get('pulse.room'),me:LS.get('pulse.me'),members:[],matches:[],cards:[],tab:LS.get('pulse.tab')||'squad',ch:null,last:null,h2h:{a:null,b:null}};
+
+/* ============ RANKING ============ */
+const TIERS=[['Bronze',900,'--bronze'],['Silver',1050,'--silver'],['Gold',1150,'--gold'],['Platinum',1250,'--plat']];
+function tierOf(r){
+  let i=0;TIERS.forEach((t,k)=>{if(r>=t[1])i=k});
+  const t=TIERS[i],n=TIERS[i+1];
+  return{name:t[0],color:t[2],next:n?n[0]:null,toNext:n?n[1]-r:0,pct:n?Math.max(0,Math.min(1,(r-t[1])/(n[1]-t[1]))):1};
+}
+function compute(){
+  const st={};const get=id=>st[id]||(st[id]={id,r:1000,w:0,l:0,cur:0,best:0});
+  const ev=[];
+  [...S.matches].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)).forEach(m=>{
+    const w=get(m.winner_id),l=get(m.loser_id);
+    const pw=w.r,pl=l.r,exp=1/(1+Math.pow(10,(pl-pw)/400));
+    const d=Math.max(1,Math.round(24*(1-exp)));
+    w.r+=d;l.r-=d;w.w++;l.l++;w.cur++;l.cur=0;w.best=Math.max(w.best,w.cur);
+    ev.push({m,d,gap:pl-pw});
+  });
+  return{st,ev,get};
+}
+const nameOf=(id,fb)=>(S.members.find(m=>m.id===id)||{}).name||fb||'Unknown';
+
+/* ============ BOUNTY DECK ============ */
+const DECK=[
+ ['Modifier','Dealer\u2019s Choice','The loser of the last match sets one rule for the next game. Everyone follows it.'],
+ ['Modifier','Standard Issue','Default loadout only. No unlocks, no custom equipment.'],
+ ['Modifier','Radio Silence','No voice chat until the first objective is secured.'],
+ ['Bounty','Marked Target','The top-ranked player is marked. Whoever beats them first earns bragging rights for the night.'],
+ ['Handicap','Underdog Rights','The lowest-ranked player picks the mode, map or team.'],
+ ['Modifier','Quiet Opening','No engagement for the first 60 seconds.'],
+ ['Modifier','Mirror Match','Everyone plays the same character, class or team.'],
+ ['Bounty','Sudden Rematch','The loser may call an immediate rematch. One use per player tonight.'],
+ ['Handicap','Inverted Axis','Invert your look controls for the entire match.'],
+ ['Handicap','Streak Tax','Anyone on a 3+ streak plays the next game with a handicap chosen by the squad.'],
+ ['Modifier','Lowest Pick','Choose the character, class or team you consider the weakest.'],
+ ['Bounty','Clean Margin','A win only counts if you take it by a clear margin of two or more.'],
+ ['Modifier','Hard Cap','Match capped at 10 minutes. Highest score at the buzzer wins.'],
+ ['Modifier','Spectator Draft','Eliminated players choose the next map or mode.'],
+ ['Handicap','Single Hand','Last-place player from the previous game gets a free restart on one round.'],
+ ['Modifier','Veto','Each player may veto one drawn card tonight.']
+];
+
+/* ============ DATA ============ */
+async function refresh(){
+  if(!S.room)return;
+  const [m,x,c]=await Promise.all([
+    sb.from('members').select('*').eq('room_code',S.room),
+    sb.from('matches').select('*').eq('room_code',S.room).order('created_at',{ascending:true}).limit(2000),
+    sb.from('cards').select('*').eq('room_code',S.room).order('created_at',{ascending:true})
+  ]);
+  if(m.error||x.error||c.error){setLive(false);return}
+  S.members=m.data;S.matches=x.data;S.cards=c.data;
+  if(!S.members.find(z=>z.id===S.me)){leaveLocal();toast('You were removed from this room');return}
+  render();
+}
+let rT;const debRefresh=()=>{clearTimeout(rT);rT=setTimeout(refresh,120)};
+function setLive(on){const d=$('#live');if(d)d.classList.toggle('live',!!on)}
+function subscribe(){
+  if(S.ch)sb.removeChannel(S.ch);
+  const f='room_code=eq.'+S.room;
+  S.ch=sb.channel('pulse-'+S.room)
+    .on('postgres_changes',{event:'*',schema:'public',table:'members',filter:f},debRefresh)
+    .on('postgres_changes',{event:'*',schema:'public',table:'matches',filter:f},debRefresh)
+    .on('postgres_changes',{event:'*',schema:'public',table:'cards',filter:f},debRefresh)
+    .subscribe(s=>setLive(s==='SUBSCRIBED'));
+}
+setInterval(()=>{if(S.room&&!document.hidden)refresh()},20000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.room)refresh()});
+
+async function addMember(code,name,psn){
+  const {data:ex}=await sb.from('members').select('*').eq('room_code',code);
+  const same=(ex||[]).find(m=>m.name.toLowerCase()===name.toLowerCase());
+  let id;
+  if(same){id=same.id;await sb.from('members').update({psn_id:psn||same.psn_id,status:'In Lobby',updated_at:new Date().toISOString()}).eq('id',id)}
+  else{
+    id=uuid();
+    const {error}=await sb.from('members').insert({id,room_code:code,name,psn_id:psn||'',status:'In Lobby',game:''});
+    if(error)throw error;
+  }
+  S.room=code;S.me=id;LS.set('pulse.room',code);LS.set('pulse.me',id);
+  await enter();
+}
+async function createRoom(name,psn){
+  for(let i=0;i<8;i++){
+    const code=genCode();
+    const {error}=await sb.from('rooms').insert({code});
+    if(!error)return addMember(code,name,psn);
+    if(error.code!=='23505')throw error;
+  }
+  throw new Error('Could not allocate a room code. Try again.');
+}
+async function joinRoom(code,name,psn){
+  const {data,error}=await sb.from('rooms').select('code').eq('code',code).maybeSingle();
+  if(error)throw error;
+  if(!data)throw new Error('No room found with that code.');
+  return addMember(code,name,psn);
+}
+async function saveMe(patch){
+  const me=S.members.find(m=>m.id===S.me);if(me)Object.assign(me,patch);
+  const {error}=await sb.from('members').update({...patch,updated_at:new Date().toISOString()}).eq('id',S.me);
+  if(error)toast('Sync failed');
+}
+function leaveLocal(){
+  if(S.ch){sb.removeChannel(S.ch);S.ch=null}
+  S.room=null;S.me=null;S.members=[];S.matches=[];S.cards=[];S.last=null;
+  LS.del('pulse.room');LS.del('pulse.me');showGate();
+}
+
+/* ============ SCREENS ============ */
+function showGate(){$('#app').classList.add('hidden');$('#gate').classList.remove('hidden');$('#gName').value=LS.get('pulse.name')||'';$('#gPsn').value=LS.get('pulse.psn')||''}
+async function enter(){
+  $('#gate').classList.add('hidden');$('#app').classList.remove('hidden');
+  $('#roomCode').textContent=S.room;
+  subscribe();await refresh();
+}
+async function gateGo(kind){
+  const name=$('#gName').value.trim(),psn=$('#gPsn').value.trim(),code=$('#gCode').value.trim().toUpperCase();
+  const err=$('#gErr');err.textContent='';
+  if(!name){err.textContent='Enter a display name.';return}
+  if(kind==='join'&&code.length!==4){err.textContent='Room codes are 4 characters.';return}
+  LS.set('pulse.name',name);LS.set('pulse.psn',psn);
+  const b=kind==='join'?$('#bJoin'):$('#bCreate');b.disabled=true;
+  try{kind==='join'?await joinRoom(code,name,psn):await createRoom(name,psn)}
+  catch(e){err.textContent=e.message||'Connection error. Check your Supabase setup.'}
+  b.disabled=false;
+}
+
+/* ============ RENDER ============ */
+function render(force){
+  const v=$('#view');if(!v)return;
+  const ae=document.activeElement;
+  if(!force&&ae&&v.contains(ae)&&/INPUT|SELECT|TEXTAREA/.test(ae.tagName))return;
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===S.tab));
+  v.innerHTML=S.tab==='squad'?viewSquad():S.tab==='compete'?viewCompete():viewBounty();
+}
+function tierBadge(r){const t=tierOf(r);return`<span class="tier" style="--c:var(${t.color})">${t.name}</span>`}
+
+function viewSquad(){
+  const {st}=compute();
+  const me=S.members.find(m=>m.id===S.me)||{};
+  const order={'In Match':0,'In Lobby':1,'AFK':2,'Offline':3};
+  const list=[...S.members].sort((a,b)=>(order[a.status]??9)-(order[b.status]??9)||a.name.localeCompare(b.name));
+  const live=S.members.filter(m=>m.status==='In Lobby'||m.status==='In Match').length;
+  return`
+  <div class="card pad">
+    <div class="row" style="margin-bottom:12px"><span class="lbl">Your status</span><div class="sp"></div><span class="mut" style="font-size:12px">${esc(me.name||'')}</span></div>
+    <div class="seg">${STATUS.map(([s,c])=>`<button data-act="status" data-v="${s}" class="${me.status===s?'on':''}" style="--c:var(${c})"><i></i>${s}</button>`).join('')}</div>
+    <div class="field" style="margin:14px 0 0"><label class="lbl">Current game</label><input class="in" id="inGame" maxlength="40" placeholder="What are you playing?" value="${esc(me.game)}" autocomplete="off"></div>
+    <div class="field" style="margin:12px 0 0"><label class="lbl">PSN ID</label><input class="in" id="inPsn" maxlength="16" placeholder="Your PSN ID" value="${esc(me.psn_id)}" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+  </div>
+  <h2 class="sec">Squad<span class="sp"></span><span style="letter-spacing:.1em">${live} active / ${S.members.length}</span></h2>
+  <div class="card">${list.map(m=>{
+    const s=st[m.id]||{r:1000};const c=stColor(m.status);
+    return`<div class="mem">
+      <div class="av" style="--c:var(${c})">${esc((m.name||'?')[0].toUpperCase())}<b></b></div>
+      <div class="sp" style="min-width:0">
+        <div class="nm">${esc(m.name)}${m.id===S.me?'<span class="mut" style="font-size:11px;font-weight:500">you</span>':''}${tierBadge(s.r)}</div>
+        <div class="sub"><span class="stlbl" style="--c:var(${c})">${m.status.toUpperCase()}</span>${m.game?' \u00b7 '+esc(m.game):''}</div>
+      </div>
+      ${m.psn_id?`<button class="psn" data-act="psn" data-v="${esc(m.psn_id)}">${ICON.copy}<span>${esc(m.psn_id)}</span></button>`:`<span class="psn empty">No PSN</span>`}
+    </div>`}).join('')}</div>
+  <div class="mut" style="text-align:center;font-size:12px;margin-top:16px">Share code <b style="letter-spacing:.2em;color:var(--tx)">${esc(S.room)}</b> with your squad</div>`;
+}
+
+function viewCompete(){
+  const {st,ev}=compute();
+  const ms=S.members;
+  const rows=ms.map(m=>st[m.id]||{id:m.id,r:1000,w:0,l:0,cur:0,best:0}).map(s=>({...s,name:nameOf(s.id)})).sort((a,b)=>b.r-a.r||b.w-a.w);
+  if(!S.h2h.a||!ms.find(m=>m.id===S.h2h.a))S.h2h.a=S.me;
+  if(!S.h2h.b||!ms.find(m=>m.id===S.h2h.b)||S.h2h.b===S.h2h.a)S.h2h.b=(ms.find(m=>m.id!==S.h2h.a)||{}).id||null;
+  const recent=[...ev].reverse().slice(0,12);
+  return`
+  <button class="btn pri blk" data-act="logopen" ${ms.length<2?'disabled style="opacity:.5"':''}>Log match result</button>
+  <h2 class="sec">Standings<span class="sp"></span><span>Rating</span></h2>
+  <div class="card">${rows.map((s,i)=>{const t=tierOf(s.r);return`
+    <div class="st">
+      <div class="rk num">${i+1}</div>
+      <div style="min-width:0">
+        <div class="row" style="gap:8px"><b style="font-size:15px">${esc(s.name)}</b><span class="tier" style="--c:var(${t.color})">${t.name}</span>${s.cur>0?`<span class="strk w">W${s.cur}</span>`:s.l>0?`<span class="strk l">L</span>`:''}</div>
+        <div class="bar" style="--c:var(${t.color})"><i style="width:${t.pct*100}%"></i></div>
+      </div>
+      <div class="rec num">${s.w}W ${s.l}L<br>${t.next?t.toNext+' to '+t.next:'Top tier'}</div>
+      <div class="rt num">${s.r}</div>
+    </div>`}).join('')}</div>
+  <h2 class="sec">Head to head</h2>
+  ${viewH2H(ev)}
+  <h2 class="sec">Recent results</h2>
+  <div class="card">${recent.length?recent.map(e=>`
+    <div class="mt"><div class="sp"><div><span class="w">${esc(nameOf(e.m.winner_id,e.m.winner_name))}</span> <span class="mut">def.</span> <span class="l">${esc(nameOf(e.m.loser_id,e.m.loser_name))}</span></div>
+    <div class="meta">${dayFmt(e.m.created_at)} ${timeFmt(e.m.created_at)}${e.m.game?' \u00b7 '+esc(e.m.game):''}${e.gap>0?' \u00b7 Upset':''}</div></div>
+    <span class="d num">+${e.d}</span>
+    <button class="x" data-act="rmmatch" data-v="${e.m.id}" aria-label="Remove">${ICON.x}</button></div>`).join(''):`<div class="empty">No matches logged yet.<br>Log your first result to start the ladder.</div>`}</div>`;
+}
+function viewH2H(ev){
+  const a=S.h2h.a,b=S.h2h.b;const ms=S.members;
+  const opt=sel=>ms.map(m=>`<option value="${m.id}" ${m.id===sel?'selected':''}>${esc(m.name)}</option>`).join('');
+  if(!a||!b)return`<div class="card empty">Add a second player to see rivalry stats.</div>`;
+  const games=ev.filter(e=>(e.m.winner_id===a&&e.m.loser_id===b)||(e.m.winner_id===b&&e.m.loser_id===a));
+  const aw=games.filter(e=>e.m.winner_id===a).length,bw=games.length-aw;
+  const tot=games.length||1;
+  const last=games.slice(-8);
+  let sk=0,skWho=null;for(let i=games.length-1;i>=0;i--){const w=games[i].m.winner_id;if(!skWho)skWho=w;if(w===skWho)sk++;else break}
+  const lead=aw===bw?'Series tied':(aw>bw?nameOf(a):nameOf(b))+' leads the series';
+  return`<div class="card pad">
+    <div class="row" style="gap:10px"><select class="sel" id="h2a">${opt(a)}</select><span class="vs mut" style="font-size:10px;letter-spacing:.2em">VS</span><select class="sel" id="h2b">${opt(b)}</select></div>
+    <div class="h2h" style="margin-top:18px">
+      <div><div class="big">${aw}</div><div class="mut" style="font-size:12px;margin-top:6px">${esc(nameOf(a))}</div></div>
+      <div class="vs">${games.length} GAMES</div>
+      <div><div class="big">${bw}</div><div class="mut" style="font-size:12px;margin-top:6px">${esc(nameOf(b))}</div></div>
+    </div>
+    <div class="split"><i style="width:${aw/tot*100}%;background:var(--blue2)"></i><i style="width:${bw/tot*100}%;background:var(--mu)"></i></div>
+    ${games.length?`<div class="form">${last.map(e=>`<i class="${e.m.winner_id===a?'a':'b'}"></i>`).join('')}</div>
+    <div class="mut" style="text-align:center;font-size:12.5px;margin-top:12px">${lead}${sk>1?` \u00b7 ${esc(nameOf(skWho))} on ${sk} straight`:''}</div>`:`<div class="mut" style="text-align:center;font-size:12.5px;margin-top:14px">No games between these two yet.</div>`}
+  </div>`;
+}
+
+function cardFace(c){return`<div class="cat"><span>${esc(c.cat)}</span><em>${c.custom?'CUSTOM':'PULSE'}</em></div><div><h3>${esc(c.title)}</h3><p>${esc(c.rule)}</p></div><div class="ft">PULSE // PS5</div>`}
+function viewBounty(){
+  return`
+  <div class="deck"><div class="flip ${S.last?'on':''}" id="flip" data-act="draw">
+    <div class="face front">${ICON.pulse}<div class="t">DRAW A CARD</div><div class="h">Tap to reveal your next rule</div></div>
+    <div class="face back" id="back">${S.last?cardFace(S.last):''}</div>
+  </div></div>
+  <div class="row" style="gap:10px"><button class="btn pri sp" data-act="draw">Draw card</button><button class="btn" data-act="addcard" aria-label="Add custom card">${ICON.plus.replace('<svg','<svg width="16" height="16"')} Custom</button></div>
+  <h2 class="sec">Squad cards<span class="sp"></span><span>${DECK.length+S.cards.length} in deck</span></h2>
+  <div class="card">${S.cards.length?S.cards.map(c=>`<div class="cc"><div class="sp"><div class="tt">${esc(c.title)}</div><div class="rr">${esc(c.rule)}</div></div><button class="x" data-act="delcard" data-v="${c.id}" aria-label="Delete">${ICON.x}</button></div>`).join(''):`<div class="empty">No custom cards yet.<br>Use Custom to add rules unique to your squad.</div>`}</div>`;
+}
+function draw(){
+  const pool=[...DECK.map(d=>({cat:d[0],title:d[1],rule:d[2]})),...S.cards.map(c=>({cat:c.category||'Custom',title:c.title,rule:c.rule,custom:true}))];
+  let c;do{c=pool[Math.random()*pool.length|0]}while(pool.length>1&&S.last&&c.title===S.last.title);
+  S.last=c;const f=$('#flip');if(!f)return;
+  const show=()=>{$('#back').innerHTML=cardFace(c);f.classList.add('on');if(navigator.vibrate)navigator.vibrate(10)};
+  if(f.classList.contains('on')){f.classList.remove('on');setTimeout(show,360)}else show();
+}
+
+/* ============ SHEETS / MODALS ============ */
+function openSheet(html){const s=$('#sheet');s.innerHTML='<div class="grab"></div>'+html;$('#ov').classList.add('on');requestAnimationFrame(()=>s.classList.add('on'))}
+function closeAll(){$('#sheet').classList.remove('on');$('#modal').classList.remove('on');$('#ov').classList.remove('on')}
+function openModal(html){$('#modalBody').innerHTML=html;$('#ov').classList.add('on');requestAnimationFrame(()=>$('#modal').classList.add('on'))}
+
+function sheetLog(){
+  const ms=S.members;const o=sel=>ms.map(m=>`<option value="${m.id}" ${m.id===sel?'selected':''}>${esc(m.name)}</option>`).join('');
+  const other=(ms.find(m=>m.id!==S.me)||{}).id;
+  const me=ms.find(m=>m.id===S.me)||{};
+  openSheet(`<h3>Log match result</h3>
+    <div class="field"><label class="lbl">Winner</label><select class="sel" id="lw">${o(S.me)}</select></div>
+    <div class="field"><label class="lbl">Loser</label><select class="sel" id="ll">${o(other)}</select></div>
+    <div class="field"><label class="lbl">Game (optional)</label><input class="in" id="lg" maxlength="40" value="${esc(me.game)}" placeholder="Game or mode" autocomplete="off"></div>
+    <div class="err" id="le"></div>
+    <button class="btn pri blk" data-act="savematch">Save result</button>`);
+}
+async function saveMatch(){
+  const w=$('#lw').value,l=$('#ll').value;
+  if(w===l){$('#le').textContent='Winner and loser must be different players.';return}
+  const {error}=await sb.from('matches').insert({id:uuid(),room_code:S.room,winner_id:w,loser_id:l,winner_name:nameOf(w),loser_name:nameOf(l),game:$('#lg').value.trim()});
+  if(error){$('#le').textContent='Could not save. Check your connection.';return}
+  closeAll();toast('Result logged');refresh();
+}
+function sheetCard(){
+  openSheet(`<h3>Add custom card</h3>
+    <div class="field"><label class="lbl">Type</label><select class="sel" id="cc"><option>Modifier</option><option>Bounty</option><option>Handicap</option></select></div>
+    <div class="field"><label class="lbl">Title</label><input class="in" id="ct" maxlength="30" placeholder="Card title" autocomplete="off"></div>
+    <div class="field"><label class="lbl">Rule</label><input class="in" id="cr" maxlength="140" placeholder="What does the squad have to do?" autocomplete="off"></div>
+    <div class="err" id="ce"></div>
+    <button class="btn pri blk" data-act="savecard">Add to deck</button>`);
+}
+async function saveCard(){
+  const t=$('#ct').value.trim(),r=$('#cr').value.trim();
+  if(!t||!r){$('#ce').textContent='Add a title and a rule.';return}
+  const {error}=await sb.from('cards').insert({id:uuid(),room_code:S.room,category:$('#cc').value,title:t,rule:r});
+  if(error){$('#ce').textContent='Could not save. Check your connection.';return}
+  closeAll();toast('Card added');refresh();
+}
+
+/* ============ SESSION RECAP ============ */
+function sessionData(){
+  const {ev}=compute();const since=Date.now()-12*3600e3;
+  const se=ev.filter(e=>new Date(e.m.created_at)>=since);
+  const p={};const g=(id,n)=>p[id]||(p[id]={id,name:nameOf(id,n),w:0,l:0,d:0,cur:0,best:0});
+  se.forEach(e=>{const w=g(e.m.winner_id,e.m.winner_name),l=g(e.m.loser_id,e.m.loser_name);w.w++;w.d+=e.d;w.cur++;w.best=Math.max(w.best,w.cur);l.l++;l.d-=e.d;l.cur=0});
+  const arr=Object.values(p);
+  const mvp=[...arr].sort((a,b)=>b.w-a.w||b.d-a.d||(b.w/(b.w+b.l))-(a.w/(a.w+a.l)))[0];
+  const streak=[...arr].sort((a,b)=>b.best-a.best)[0];
+  const upset=se.filter(e=>e.gap>0).sort((a,b)=>b.gap-a.gap)[0];
+  return{se,arr:arr.sort((a,b)=>b.w-a.w||b.d-a.d),mvp,streak,upset};
+}
+function recapText(d){
+  if(!d.se.length)return'PULSE // PS5 Session Summary\nNo matches logged.';
+  const L=['PULSE // PS5 \u2014 Session Summary',dayFmt(Date.now())+' \u00b7 '+d.se.length+' matches','',
+   'MVP: '+d.mvp.name+' ('+d.mvp.w+'W '+d.mvp.l+'L, '+(d.mvp.d>=0?'+':'')+d.mvp.d+' rating)'];
+  if(d.streak&&d.streak.best>=2)L.push('Best streak: '+d.streak.name+' \u2014 '+d.streak.best+' wins');
+  if(d.upset)L.push('Biggest upset: '+nameOf(d.upset.m.winner_id,d.upset.m.winner_name)+' over '+nameOf(d.upset.m.loser_id,d.upset.m.loser_name)+' (+'+Math.round(d.upset.gap)+' gap)');
+  L.push('','Standings tonight:');d.arr.forEach((a,i)=>L.push((i+1)+'. '+a.name+' \u2014 '+a.w+'W '+a.l+'L'));
+  return L.join('\n');
+}
+function openRecap(){
+  const d=sessionData();
+  if(!d.se.length){openModal(`<div class="recap"><div class="hd"><div class="mark">PULSE<small>// PS5</small></div><span class="lbl">Session</span></div><div class="empty">No matches in the last 12 hours.<br>Log a result to build tonight\u2019s summary.</div></div><div class="row" style="margin-top:12px"><button class="btn blk" data-act="close">Close</button></div>`);return}
+  const m=d.mvp;
+  openModal(`<div class="recap" id="recapCard">
+    <div class="hd"><div class="mark">PULSE<small>// PS5</small></div><span class="lbl">${dayFmt(Date.now())}</span></div>
+    <div class="lbl">Most valuable player</div>
+    <div class="mvp">${esc(m.name)}</div>
+    <div class="sub num">${m.w}W ${m.l}L \u00b7 ${m.d>=0?'+':''}${m.d} rating</div>
+    <div class="grid">
+      <div class="tile"><div class="lbl">Best streak</div><div class="v">${d.streak&&d.streak.best>=2?esc(d.streak.name):'\u2014'}</div><div class="s">${d.streak&&d.streak.best>=2?d.streak.best+' wins in a row':'No streaks of 2+'}</div></div>
+      <div class="tile"><div class="lbl">Matches</div><div class="v num">${d.se.length}</div><div class="s">${d.arr.length} players</div></div>
+      <div class="tile wide"><div class="lbl">Biggest upset</div>${d.upset?`<div class="v">${esc(nameOf(d.upset.m.winner_id,d.upset.m.winner_name))} <span class="mut" style="font-weight:400">over</span> ${esc(nameOf(d.upset.m.loser_id,d.upset.m.loser_name))}</div><div class="s">Rating gap of ${Math.round(d.upset.gap)} points overcome</div>`:`<div class="v">\u2014</div><div class="s">No upsets tonight</div>`}</div>
+    </div>
+    <div class="rows">${d.arr.map((a,i)=>`<div class="rw"><span><span class="mut num" style="display:inline-block;width:20px">${i+1}</span>${esc(a.name)}</span><span class="num mut">${a.w}W ${a.l}L</span></div>`).join('')}</div>
+    <div class="ft">PULSE // PS5</div>
+  </div>
+  <div class="row" style="margin-top:12px;gap:10px"><button class="btn sp" data-act="copyrecap">Copy as text</button><button class="btn pri sp" data-act="close">Done</button></div>
+  <div class="mut" style="text-align:center;font-size:11.5px;margin-top:10px">Screenshot the card to share it with the squad.</div>`);
+}
+
+/* ============ EVENTS ============ */
+document.addEventListener('click',async e=>{
+  const tb=e.target.closest('[data-tab]');
+  if(tb){S.tab=tb.dataset.tab;LS.set('pulse.tab',S.tab);render(true);window.scrollTo({top:0});return}
+  const el=e.target.closest('[data-act]');if(!el)return;
+  const a=el.dataset.act,v=el.dataset.v;
+  if(a==='close')closeAll();
+  else if(a==='copycode')copy(S.room,'Room code copied');
+  else if(a==='psn')copy(v,'PSN ID copied');
+  else if(a==='status'){await saveMe({status:v});render(true)}
+  else if(a==='recap')openRecap();
+  else if(a==='copyrecap')copy(recapText(sessionData()),'Summary copied');
+  else if(a==='leave'){if(confirm('Leave room '+S.room+'? Your match history stays with the room.')){await sb.from('members').delete().eq('id',S.me);leaveLocal()}}
+  else if(a==='logopen')sheetLog();
+  else if(a==='savematch')saveMatch();
+  else if(a==='rmmatch'){if(confirm('Remove this result?')){await sb.from('matches').delete().eq('id',v);refresh()}}
+  else if(a==='draw')draw();
+  else if(a==='addcard')sheetCard();
+  else if(a==='savecard')saveCard();
+  else if(a==='delcard'){await sb.from('cards').delete().eq('id',v);refresh()}
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='inGame')saveMe({game:t.value.trim()});
+  else if(t.id==='inPsn'){saveMe({psn_id:t.value.trim()});LS.set('pulse.psn',t.value.trim())}
+  else if(t.id==='h2a'){S.h2h.a=t.value;if(S.h2h.b===t.value)S.h2h.b=null;render(true)}
+  else if(t.id==='h2b'){S.h2h.b=t.value;render(true)}
+});
+document.addEventListener('focusout',()=>setTimeout(()=>{const ae=document.activeElement;if(!ae||!/INPUT|SELECT|TEXTAREA/.test(ae.tagName))render()},250));
+$('#bCreate').onclick=()=>gateGo('create');
+$('#bJoin').onclick=()=>gateGo('join');
+$('#gCode').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()});
+
+/* ============ BOOT ============ */
+(async function boot(){
+  if(S.room&&S.me){try{await enter();return}catch(e){}}
+  showGate();
+})();
+</script>
+</body>
+</html>
